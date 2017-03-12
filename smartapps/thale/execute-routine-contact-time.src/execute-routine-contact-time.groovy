@@ -35,6 +35,7 @@ def selectRoutine() {
             input "sensorClose", "capability.contactSensor", title: "This sensor closes", required: false
             input "timeStart", "time", title: "And it's after this time:"
             input "timeEnd", "time", title: "But it's before this time:"
+	    input "days", "enum", title: "Select Days of the Week", required: true, multiple: true, options: ["Monday": "Monday", "Tuesday": "Tuesday", "Wednesday": "Wednesday", "Thursday": "Thursday", "Friday": "Friday", "Saturday": "Saturday", "Sunday": "Sunday"]
         }
         def phrases = location.helloHome?.getPhrases()*.label
         if (phrases) {
@@ -83,12 +84,21 @@ def contactClosedHandler(evt) {
 def checkTime() {
 	log.debug "Checking time and performing actions"
     
+	def df = new java.text.SimpleDateFormat("EEEE")
+    // Ensure the new date object is set to local time zone
+    df.setTimeZone(location.timeZone)
+    def day = df.format(new Date())
+    //Does the preference input Days, i.e., days-of-week, contain today?
+    def dayCheck = days.contains(day)
+	if(dayCheck) {
 	// if between the start and end time, send the correct Hello Home Phrase
-    if(timeOfDayIsBetween(timeStart, timeEnd, (new Date()), location.timeZone))
-    {
-        // after the time and the trigger went; talk to house
-        location.helloHome.execute(settings.HHPhrase)
-        log.debug "sent $HHPhrase"
-    }
+    		if(timeOfDayIsBetween(timeStart, timeEnd, (new Date()), location.timeZone))
+		    {
+			// after the time and the trigger went; talk to house
+			location.helloHome.execute(settings.HHPhrase)
+			log.debug "sent $HHPhrase"
+		    }	
+	}
+	
 }
 
